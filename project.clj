@@ -1,4 +1,4 @@
-(defproject clj-orphanage "0.1.0"
+(defproject clj-orphanage "0.2.0"
   :description "Find orphaned clojure files"
   :url "https://github.com/clumsyjedi/clj-orphanage"
   :license {:name "Eclipse Public License"
