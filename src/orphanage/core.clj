@@ -41,4 +41,7 @@
 (defn find-orphans [root]
   (let [files (find-clj-files root)
         state (visit-files (first files) (rest files) {})]
-    (into {} (filter (fn [[k v]] (= 0 v)) state))))
+    (->> state
+         (filter (fn [[k v]] (= 0 v)))
+         (remove nil?)
+         (into {}))))
