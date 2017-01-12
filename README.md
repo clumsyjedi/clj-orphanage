@@ -4,7 +4,7 @@ A Clojure library to find orphaned clojure files
 
 ## Usage
 
-    [clj-orphanage "0.1.0"]
+    [clj-orphanage "0.2.0"]
 
     (require 'orphanage.core :refer :all)
     (find-orphans "/path/to/proj/root")
