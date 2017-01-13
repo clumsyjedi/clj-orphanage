@@ -20,28 +20,42 @@
 (defn get-namespace [rdr]
   (parse/read-ns-decl rdr))
 
-(defn ns-loaded [namespace state]
-  (update-in state [namespace] #(if % % 0)))
+(defn ns-loaded [namespace state init-fn]
+  (init-fn state namespace))
 
-(defn deps-loaded [deps state]
-  (if (empty? deps)
-    state
-    (recur (rest deps) (update-in state [(first deps)] #(if % (inc %) 1)))))
+(defn deps-loaded [ns deps state update-fn]
+  (loop [deps deps state state]
+    (if (empty? deps)
+      state
+      (recur (rest deps) (update-fn state ns (first deps))))))
 
-(defn visit-files [file files state]
-  (if file
-   (let [rdr (-> file (java.io.FileReader.) (java.io.PushbackReader.))
-         namespace (get-namespace rdr)
-         state (ns-loaded (second namespace) state)
-         deps (parse/deps-from-ns-decl namespace)
-         state (deps-loaded deps state)]
-     (recur (first files) (rest files) state))
-   state))
+(defn visit-files [files init-fn update-fn]
+  (loop [file (first files) files (rest files) state {}] 
+    (if file
+      (let [rdr (-> file (java.io.FileReader.) (java.io.PushbackReader.))
+            namespace (get-namespace rdr)
+            state (ns-loaded (second namespace) state init-fn)
+            deps (parse/deps-from-ns-decl namespace)
+            state (deps-loaded (second namespace) deps state update-fn)]
+        (recur (first files) (rest files) state))
+      state)))
 
 (defn find-orphans [root]
   (let [files (find-clj-files root)
-        state (visit-files (first files) (rest files) {})]
+        state (visit-files files 
+                           (fn [state ns] (update-in state [ns] #(if % % 0)))
+                           (fn [state ns deps] (update-in state [ns] #(if % (inc %) 1))))]
     (->> state
-         (filter (fn [[k v]] (= 0 v)))
-         (remove nil?)
+         (filter (fn [[k v]] (and k (= 0 v))))
          (into {}))))
+
+(defn find-refs [root qns]
+  (let [files (find-clj-files root)
+        state (visit-files files 
+                           (fn [state ns] (update-in state [ns] #(if % % [])))
+                           (fn [state ns dep] (update-in state [ns] conj dep)))]
+    (->> state
+         (filter (fn [[k v]] k))
+         (filter (fn [[ns refs]]
+                   ((set refs) qns)))
+         (map first))))
