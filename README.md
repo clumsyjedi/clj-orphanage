@@ -1,13 +1,21 @@
 # clj-orphanage
 
-A Clojure library to find orphaned clojure files
+A Clojure library to find orphaned clojure files.
+
+## Obtention
+
+```
+[clj-orphanage "0.2.1"]
+```
 
 ## Usage
 
-    [clj-orphanage "0.2.1"]
-
-    (require 'orphanage.core :refer :all)
-    (find-orphans "/path/to/proj/root")
+    (require 'orphanage.core)
+    (orphanage.core/find-orphans "/path/to/proj/root")
+    ;; returns a list of namespaces that are not referenced by any other namespace
+    
+    (orphanage.core/find-refs "/path/to/proj/root" 'some.ns)
+    ;; returns a list of namespaces that reference (require) some.ns
 
 ## License
 
